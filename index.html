@@ -60,9 +60,9 @@
                                 'maxzoom': 22
                             },
                             {
-                                "id":"buildings",
+                                "id":"boundaries",
                                 "source": "boundaries",
-                                "source-layer":"landuse",
+				"source-layer": "projects",
                                 "type": "fill",
                                 "paint": {
                                     "fill-color": "steelblue"
@@ -71,6 +71,59 @@
                         ]
                     }
                 });
+	    	// Create a popup, but don't add it to the map yet.
+		const popup = new maplibregl.Popup({
+		    closeButton: false,
+		    closeOnClick: false
+		});
+
+		function groupArrayIntoPairs(arr) {
+		  const pairedArray = [];
+
+		  for (let i = 0; i < arr.length; i += 2) {
+		    if (i + 1 < arr.length) {
+		      pairedArray.push([arr[i], arr[i + 1]]);
+		    } else {
+		      // If there's an odd number of elements, push the last element as a pair with `null`.
+		      pairedArray.push([arr[i], null]);
+		    }
+		  }
+
+		  return pairedArray;
+		}
+
+
+		map.on('mouseenter', 'boundaries', (e) => {
+		    // Change the cursor style as a UI indicator.
+		    map.getCanvas().style.cursor = 'pointer';
+
+		    const coordinates = groupArrayIntoPairs(e.features[0].geometry.coordinates.flat(Infinity));
+		    let mean = coordinates.reduce((acc, cur) => {
+		    	cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
+		    	return acc;
+		    }, []).map(e => e / coordinates.length);
+		    const name = e.features[0].properties["Name"];
+		    const estimatedAnnualEmissionsReduction = e.features[0].properties["Estimated Annual Emission Reductions"];
+
+		    // Ensure that if the map is zoomed out such that multiple
+		    // copies of the feature are visible, the popup appears
+		    // over the copy being pointed to.
+		    while (Math.abs(e.lngLat.lng - mean[0]) > 180) {
+			mean[0] += e.lngLat.lng > mean[0] ? 360 : -360;
+		    }
+
+		    // Populate the popup and set its coordinates
+		    // based on the feature found.
+		    popup.setLngLat(mean).setHTML(
+			    '<h3>' + name + '</h3>' +
+			    '<p>Estimated annual emissions reductions: ' + estimatedAnnualEmissionsReduction + ' tCO2e</p>'
+		    ).addTo(map);
+		});
+
+		map.on('mouseleave', 'boundaries', () => {
+		    map.getCanvas().style.cursor = '';
+		    popup.remove();
+		});
             })
         </script>
     </body>

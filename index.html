@@ -1,130 +1,132 @@
 <!-- Example taken from https://github.com/protomaps/PMTiles/blob/f2805a16814fb8772a8d4069bcdcd365981bc499/js/examples/maplibre.html -->
 <html>
-    <head>
-        <title>Tree Atlas</title>
-        <meta charset="utf-8"/>
-        <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" crossorigin="anonymous">
-        <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
-        <style>
-            body {
-                margin: 0;
-            }
-            #map {
-                height:100%; width:100%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="map"></div>
-        <script type="text/javascript">
-            // add the PMTiles plugin to the maplibregl global.
-            let protocol = new pmtiles.Protocol();
-            maplibregl.addProtocol("pmtiles",protocol.tile);
+<head>
+    <title>Tree Atlas</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" crossorigin="anonymous">
+    <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
 
-            let PMTILES_URL = "https://tree-atlas.github.io/map/data/projects.pmtiles";
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script type="text/javascript">
+    // add the PMTiles plugin to the maplibregl global.
+    let protocol = new pmtiles.Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
 
-            const p = new pmtiles.PMTiles(PMTILES_URL);
+    let PMTILES_URL = "https://tree-atlas.github.io/map/data/projects.pmtiles";
 
-            // this is so we share one instance across the JS code and the map renderer
-            protocol.add(p);
+    const p = new pmtiles.PMTiles(PMTILES_URL);
 
-            // we first fetch the header so we can get the center lon, lat of the map.
-            p.getHeader().then(h => {
-                const map = new maplibregl.Map({
-                    container: 'map',
-                    zoom: h.maxZoom-2,
-                    center: [h.centerLon, h.centerLat],
-                    style: {
-                        version:8,
-                        sources: {
-                            "boundaries": {
-                                type: "vector",
-                                url: "pmtiles://" + PMTILES_URL,
-                            },
-                            'raster-tiles': {
-                                'type': 'raster',
-                                'tiles': [
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png '
-                                ],
-                                'tileSize': 256,
-                                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
-                            }
-                        },
-                        layers: [
-                            {
-                                'id': 'simple-tiles',
-                                'type': 'raster',
-                                'source': 'raster-tiles',
-                                'minzoom': 0,
-                                'maxzoom': 22
-                            },
-                            {
-                                "id":"boundaries",
-                                "source": "boundaries",
-				"source-layer": "projects",
-                                "type": "fill",
-                                "paint": {
-                                    "fill-color": "steelblue"
-                                }
-                            },
-                        ]
+    // this is so we share one instance across the JS code and the map renderer
+    protocol.add(p);
+
+    // we first fetch the header so we can get the center lon, lat of the map.
+    p.getHeader().then(h => {
+        const map = new maplibregl.Map({
+            container: 'map',
+            zoom: h.maxZoom - 2,
+            center: [h.centerLon, h.centerLat],
+            style: {
+                version: 8,
+                sources: {
+                    "boundaries": {
+                        type: "vector",
+                        url: "pmtiles://" + PMTILES_URL,
+                    },
+                    'raster-tiles': {
+                        'type': 'raster',
+                        'tiles': [
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png '
+                        ],
+                        'tileSize': 256,
+                        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
                     }
-                });
-	    	// Create a popup, but don't add it to the map yet.
-		const popup = new maplibregl.Popup({
-		    closeButton: false,
-		    closeOnClick: false
-		});
+                },
+                layers: [
+                    {
+                        'id': 'simple-tiles',
+                        'type': 'raster',
+                        'source': 'raster-tiles',
+                        'minzoom': 0,
+                        'maxzoom': 22
+                    },
+                    {
+                        "id": "boundaries",
+                        "source": "boundaries",
+                        "source-layer": "projects",
+                        "type": "fill",
+                        "paint": {
+                            "fill-color": "steelblue"
+                        }
+                    },
+                ]
+            }
+        });
+        // Create a popup, but don't add it to the map yet.
+        const popup = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
 
-		function groupArrayIntoPairs(arr) {
-		  const pairedArray = [];
+        function groupArrayIntoPairs(arr) {
+            const pairedArray = [];
 
-		  for (let i = 0; i < arr.length; i += 2) {
-		    if (i + 1 < arr.length) {
-		      pairedArray.push([arr[i], arr[i + 1]]);
-		    } else {
-		      // If there's an odd number of elements, push the last element as a pair with `null`.
-		      pairedArray.push([arr[i], null]);
-		    }
-		  }
+            for (let i = 0; i < arr.length; i += 2) {
+                if (i + 1 < arr.length) {
+                    pairedArray.push([arr[i], arr[i + 1]]);
+                } else {
+                    // If there's an odd number of elements, push the last element as a pair with `null`.
+                    pairedArray.push([arr[i], null]);
+                }
+            }
 
-		  return pairedArray;
-		}
+            return pairedArray;
+        }
 
 
-		map.on('mouseenter', 'boundaries', (e) => {
-		    // Change the cursor style as a UI indicator.
-		    map.getCanvas().style.cursor = 'pointer';
+        map.on('mouseenter', 'boundaries', (e) => {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
 
-		    const coordinates = groupArrayIntoPairs(e.features[0].geometry.coordinates.flat(Infinity));
-		    let mean = coordinates.reduce((acc, cur) => {
-		    	cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
-		    	return acc;
-		    }, []).map(e => e / coordinates.length);
-		    const name = e.features[0].properties["Name"];
-		    const estimatedAnnualEmissionsReduction = e.features[0].properties["Estimated Annual Emission Reductions"];
+            const coordinates = groupArrayIntoPairs(e.features[0].geometry.coordinates.flat(Infinity));
+            let mean = coordinates.reduce((acc, cur) => {
+                cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
+                return acc;
+            }, []).map(e => e / coordinates.length);
+            const name = e.features[0].properties["Name"];
+            const estimatedAnnualEmissionsReduction = e.features[0].properties["Estimated Annual Emission Reductions"];
 
-		    // Ensure that if the map is zoomed out such that multiple
-		    // copies of the feature are visible, the popup appears
-		    // over the copy being pointed to.
-		    while (Math.abs(e.lngLat.lng - mean[0]) > 180) {
-			mean[0] += e.lngLat.lng > mean[0] ? 360 : -360;
-		    }
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - mean[0]) > 180) {
+                mean[0] += e.lngLat.lng > mean[0] ? 360 : -360;
+            }
 
-		    // Populate the popup and set its coordinates
-		    // based on the feature found.
-		    popup.setLngLat(mean).setHTML(
-			    '<h3>' + name + '</h3>' +
-			    '<p>Estimated annual emissions reductions: ' + estimatedAnnualEmissionsReduction + ' tCO2e</p>'
-		    ).addTo(map);
-		});
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            popup.setLngLat(mean).setHTML(
+                '<h3>' + name + '</h3>' +
+                '<p>Estimated annual emissions reductions: ' + estimatedAnnualEmissionsReduction + ' tCO2e</p>'
+            ).addTo(map);
+        });
 
-		map.on('mouseleave', 'boundaries', () => {
-		    map.getCanvas().style.cursor = '';
-		    popup.remove();
-		});
-            })
-        </script>
-    </body>
+        map.on('mouseleave', 'boundaries', () => {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+    })
+</script>
+</body>
 </html>

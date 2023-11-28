@@ -1,130 +1,212 @@
 <!-- Example taken from https://github.com/protomaps/PMTiles/blob/f2805a16814fb8772a8d4069bcdcd365981bc499/js/examples/maplibre.html -->
 <html>
-    <head>
-        <title>Tree Atlas</title>
-        <meta charset="utf-8"/>
-        <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" crossorigin="anonymous">
-        <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
-        <style>
-            body {
-                margin: 0;
-            }
-            #map {
-                height:100%; width:100%;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="map"></div>
-        <script type="text/javascript">
-            // add the PMTiles plugin to the maplibregl global.
-            let protocol = new pmtiles.Protocol();
-            maplibregl.addProtocol("pmtiles",protocol.tile);
+<head>
+    <title>Tree Atlas</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css" crossorigin="anonymous">
+    <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
 
-            let PMTILES_URL = "https://tree-atlas.github.io/map/data/projects.pmtiles";
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
 
-            const p = new pmtiles.PMTiles(PMTILES_URL);
+        .filter-group {
+            font: 1rem 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            font-weight: 600;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1;
+            border-radius: 3px;
+            width: 8vw;
+            color: #fff;
+        }
 
-            // this is so we share one instance across the JS code and the map renderer
-            protocol.add(p);
+        .filter-group input[type='checkbox']:first-child + label {
+            border-radius: 3px 3px 0 0;
+        }
 
-            // we first fetch the header so we can get the center lon, lat of the map.
-            p.getHeader().then(h => {
-                const map = new maplibregl.Map({
-                    container: 'map',
-                    zoom: h.maxZoom-2,
-                    center: [h.centerLon, h.centerLat],
-                    style: {
-                        version:8,
-                        sources: {
-                            "boundaries": {
-                                type: "vector",
-                                url: "pmtiles://" + PMTILES_URL,
-                            },
-                            'raster-tiles': {
-                                'type': 'raster',
-                                'tiles': [
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png '
-                                ],
-                                'tileSize': 256,
-                                attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
-                            }
-                        },
-                        layers: [
-                            {
-                                'id': 'simple-tiles',
-                                'type': 'raster',
-                                'source': 'raster-tiles',
-                                'minzoom': 0,
-                                'maxzoom': 22
-                            },
-                            {
-                                "id":"boundaries",
-                                "source": "boundaries",
-				"source-layer": "projects",
-                                "type": "fill",
-                                "paint": {
-                                    "fill-color": "steelblue"
-                                }
-                            },
-                        ]
+        .filter-group label:last-child {
+            border-radius: 0 0 3px 3px;
+            border: none;
+        }
+
+        .filter-group input[type='checkbox'] {
+            display: none;
+        }
+
+        .filter-group input[type='checkbox'] + label {
+            background-color: #3386c0;
+            display: block;
+            cursor: pointer;
+            padding: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+            text-transform: capitalize;
+        }
+
+        .filter-group input[type='checkbox'] + label:hover,
+        .filter-group input[type='checkbox']:checked + label:hover {
+            background-color: #286a98;
+        }
+
+        .filter-group input[type='checkbox']:checked + label {
+            background-color: #4ea0da;
+        }
+
+        .filter-group input[type='checkbox']:checked + label:before {
+            content: '✔';
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<nav id="filter-group" class="filter-group">
+    <input type="checkbox" id="arr" checked/>
+    <label for="arr">ARR</label>
+    <input type="checkbox" id="alm"/>
+    <label for="alm">ALM</label>
+    <input type="checkbox" id="ifm" checked/>
+    <label for="ifm">IFM</label>
+    <input type="checkbox" id="redd" checked/>
+    <label for="redd">REDD</label>
+    <input type="checkbox" id="wrc" checked/>
+    <label for="wrc">WRC</label>
+</nav>
+<script type="text/javascript">
+    // add the PMTiles plugin to the maplibregl global.
+    let protocol = new pmtiles.Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+
+    let PMTILES_URL = "https://tree-atlas.github.io/map/data/projects.pmtiles";
+
+    const p = new pmtiles.PMTiles(PMTILES_URL);
+
+    // this is so we share one instance across the JS code and the map renderer
+    protocol.add(p);
+
+    // we first fetch the header so we can get the center lon, lat of the map.
+    p.getHeader().then(h => {
+        const map = new maplibregl.Map({
+            container: 'map',
+            zoom: h.maxZoom - 2,
+            center: [h.centerLon, h.centerLat],
+            style: {
+                version: 8,
+                sources: {
+                    "boundaries": {
+                        type: "vector",
+                        url: "pmtiles://" + PMTILES_URL,
+                    },
+                    'raster-tiles': {
+                        'type': 'raster',
+                        'tiles': [
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png '
+                        ],
+                        'tileSize': 256,
+                        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
                     }
-                });
-	    	// Create a popup, but don't add it to the map yet.
-		const popup = new maplibregl.Popup({
-		    closeButton: false,
-		    closeOnClick: false
-		});
+                },
+                layers: [
+                    {
+                        'id': 'simple-tiles',
+                        'type': 'raster',
+                        'source': 'raster-tiles',
+                        'minzoom': 0,
+                        'maxzoom': 22
+                    },
+                    {
+                        "id": "boundaries",
+                        "source": "boundaries",
+                        "source-layer": "projects",
+                        "type": "fill",
+                        "paint": {
+                            "fill-color": "steelblue"
+                        }
+                    },
+                ]
+            }
+        });
+        // Create a popup, but don't add it to the map yet.
+        const popup = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
 
-		function groupArrayIntoPairs(arr) {
-		  const pairedArray = [];
+        function groupArrayIntoPairs(arr) {
+            const pairedArray = [];
 
-		  for (let i = 0; i < arr.length; i += 2) {
-		    if (i + 1 < arr.length) {
-		      pairedArray.push([arr[i], arr[i + 1]]);
-		    } else {
-		      // If there's an odd number of elements, push the last element as a pair with `null`.
-		      pairedArray.push([arr[i], null]);
-		    }
-		  }
+            for (let i = 0; i < arr.length; i += 2) {
+                if (i + 1 < arr.length) {
+                    pairedArray.push([arr[i], arr[i + 1]]);
+                } else {
+                    // If there's an odd number of elements, push the last element as a pair with `null`.
+                    pairedArray.push([arr[i], null]);
+                }
+            }
 
-		  return pairedArray;
-		}
+            return pairedArray;
+        }
 
 
-		map.on('mouseenter', 'boundaries', (e) => {
-		    // Change the cursor style as a UI indicator.
-		    map.getCanvas().style.cursor = 'pointer';
+        map.on('mouseenter', 'boundaries', (e) => {
+            // Change the cursor style as a UI indicator.
+            map.getCanvas().style.cursor = 'pointer';
 
-		    const coordinates = groupArrayIntoPairs(e.features[0].geometry.coordinates.flat(Infinity));
-		    let mean = coordinates.reduce((acc, cur) => {
-		    	cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
-		    	return acc;
-		    }, []).map(e => e / coordinates.length);
-		    const name = e.features[0].properties["Name"];
-		    const estimatedAnnualEmissionsReduction = e.features[0].properties["Estimated Annual Emission Reductions"];
+            const coordinates = groupArrayIntoPairs(e.features[0].geometry.coordinates.flat(Infinity));
+            let mean = coordinates.reduce((acc, cur) => {
+                cur.forEach((e, i) => acc[i] = acc[i] ? acc[i] + e : e);
+                return acc;
+            }, []).map(e => e / coordinates.length);
+            const name = e.features[0].properties["Name"];
+            const estimatedAnnualEmissionsReduction = e.features[0].properties["Estimated Annual Emission Reductions"];
 
-		    // Ensure that if the map is zoomed out such that multiple
-		    // copies of the feature are visible, the popup appears
-		    // over the copy being pointed to.
-		    while (Math.abs(e.lngLat.lng - mean[0]) > 180) {
-			mean[0] += e.lngLat.lng > mean[0] ? 360 : -360;
-		    }
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - mean[0]) > 180) {
+                mean[0] += e.lngLat.lng > mean[0] ? 360 : -360;
+            }
 
-		    // Populate the popup and set its coordinates
-		    // based on the feature found.
-		    popup.setLngLat(mean).setHTML(
-			    '<h3>' + name + '</h3>' +
-			    '<p>Estimated annual emissions reductions: ' + estimatedAnnualEmissionsReduction + ' tCO2e</p>'
-		    ).addTo(map);
-		});
+            // Populate the popup and set its coordinates
+            // based on the feature found.
+            popup.setLngLat(mean).setHTML(
+                '<h3>' + name + '</h3>' +
+                '<p>Estimated annual emissions reductions: ' + estimatedAnnualEmissionsReduction + ' tCO2e</p>'
+            ).addTo(map);
+        });
 
-		map.on('mouseleave', 'boundaries', () => {
-		    map.getCanvas().style.cursor = '';
-		    popup.remove();
-		});
-            })
-        </script>
-    </body>
+        map.on('mouseleave', 'boundaries', () => {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+
+
+        const filterGroup = document.getElementById('filter-group');
+        function updateLayerFilter() {
+            // Get all elements that are 'checked' atm, get their ID and filter that with AFOLU Activities property
+            const checkedFilterElements = filterGroup.querySelectorAll(':checked');
+            const selectedFilters = Array.from(checkedFilterElements).map(element => element.id.toUpperCase());
+
+            map.setFilter('boundaries', ['in', 'AFOLU Activities'].concat(selectedFilters));
+        }
+        // Attach event listener to the changing of any checkbox within this element
+        document.getElementById('filter-group').addEventListener('change', function (e) {
+            updateLayerFilter();
+        });
+
+        // Trigger initial updating of filters as soon as the map is fully loaded
+        map.on('load', () => {
+            updateLayerFilter();
+        });
+    });
+</script>
+</body>
 </html>
